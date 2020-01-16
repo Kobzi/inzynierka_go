@@ -39,7 +39,9 @@ func main() {
 
 
     // perform a db.Query insert
-
-
+//https://freshman.tech/web-development-with-go/
+//https://www.thepolyglotdeveloper.com/2017/04/using-sqlite-database-golang-application/
+//https://tutorialedge.net/golang/golang-mysql-tutorial/
+//https://medium.com/@hugo.bjarred/mysql-and-golang-ea0d620574d2
 
 }
