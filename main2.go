@@ -4,11 +4,11 @@ import (
     //"fmt"
     "database/sql"
     _ "github.com/mattn/go-sqlite3"
-	"log"
+	   "log"
     //"strconv"
 )
 
-type UsersStruct struct {
+type UserStruct struct {
     id   int    `json:"id"`
     name string `json:"name"`
     passwordHash string `json:"passwordHash"`
@@ -19,13 +19,23 @@ type UsersStruct struct {
 func main() {
   db, _ := sql.Open("sqlite3", "./database.db")
 
-  results, err := db.Query("SELECT id, name, passwordHash, email, level FROM users")
+  results, err := db.Query("SELECT id, name, email, level FROM users")
    if err != nil {
        panic(err.Error()) // proper error handling instead of panic in your app
    }
-   var usersResults[] UsersStruct
+   var usersResults []UserStruct
 
-
+       for results.Next() {
+           var user UserStruct
+           // for each row, scan the result into our tag composite object
+           err = results.Scan(&user.id, &user.name, &user.email, &user.level)
+           if err != nil {
+               panic(err.Error()) // proper error handling instead of panic in your app
+           }
+                   // and then print out the tag's Name attribute
+          usersResults[1]=user
+          log.Printf(user.name)
+       }
 
 
     // perform a db.Query insert

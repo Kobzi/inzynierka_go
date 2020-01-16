@@ -17,6 +17,7 @@ import (
   "database/sql"
   //_ "github.com/go-sql-driver/mysql"
 	_ "github.com/mattn/go-sqlite3"
+
 )
 
 var tpl = template.Must(template.ParseFiles("index.html"))
@@ -75,7 +76,7 @@ func CheckPasswordHash(hash, password  string) bool {
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 
- fmt.Println(r.URL.Path)
+	 //fmt.Println(r.URL.Path)
 
 	 session, _ := store.Get(r, "cookie-name")
 
@@ -107,10 +108,10 @@ func login(w http.ResponseWriter, r *http.Request) {
             return
   }
 	session, _ := store.Get(r, "cookie-name")
-//db, err := sql.Open("sqlite3", ":memory:")
+	//db, err := sql.Open("sqlite3", ":memory:")
   //password := "admin"
   //hash, _ := HashPassword(password)
-//log.Printf(hash)
+	//log.Printf(hash)
 
  if r.FormValue("login") != "" && CheckPasswordHash(findPassword(r.FormValue("login")), r.FormValue("password")) {
 	 session.Values["authenticated"] = true
@@ -121,13 +122,13 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 
 func logout(w http.ResponseWriter, r *http.Request) {
-    session, _ := store.Get(r, "cookie-name")
+	session, _ := store.Get(r, "cookie-name")
 
-    // Revoke users authentication
-			session.Values["authenticated"] = false
-	    session.Save(r, w)
+	// Revoke users authentication
+	session.Values["authenticated"] = false
+	session.Save(r, w)
 
-			http.Redirect(w, r, "", 302)
+	http.Redirect(w, r, "", 302)
 }
 
 func main() {
