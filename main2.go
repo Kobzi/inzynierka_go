@@ -32,11 +32,9 @@ func main() {
            if err != nil {
                panic(err.Error()) // proper error handling instead of panic in your app
            }
-                   // and then print out the tag's Name attribute
-          usersResults[1]=user
-          log.Printf(user.name)
+          usersResults = append(usersResults,user)
+          log.Printf(usersResults[user.id-1].name)
        }
-
 
     // perform a db.Query insert
 //https://freshman.tech/web-development-with-go/

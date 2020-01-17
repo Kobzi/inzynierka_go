@@ -28,12 +28,12 @@ var (
     key = []byte(token)
     store = sessions.NewCookieStore(key)
 )
-type UsersStruct struct {
-    id   int    `json:"id"`
-    name string `json:"name"`
-		email string `json:"email"`
-		passwordHash string `json:"passwordHash"`
-		level int `json:"level"`
+type UserStruct struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+		Email string `json:"email"`
+		PasswordHash string `json:"passwordHash"`
+		Level int `json:"level"`
 }
 
 func findPassword(nameFromForm string) string{
@@ -46,12 +46,12 @@ func findPassword(nameFromForm string) string{
 	// executing
 	defer db.Close()
 
-	var user UsersStruct
-	err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", nameFromForm).Scan(&user.passwordHash)
+	var user UserStruct
+	err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", nameFromForm).Scan(&user.PasswordHash)
 	if err != nil {
     panic(err.Error()) // proper error handling instead of panic in your app
 	}
-	return user.passwordHash
+	return user.PasswordHash
 
 }
 
@@ -91,13 +91,33 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 		switch (r.URL.Path) {
 		case "/users" :
+			db, _ := sql.Open("sqlite3", "./database.db")
+
+		  results, err := db.Query("SELECT id, name, email, level FROM users")
+		   if err != nil {
+		       panic(err.Error()) // proper error handling instead of panic in your app
+		   }
+		   var usersResults []UserStruct
+
+		       for results.Next() {
+		           var user UserStruct
+		           // for each row, scan the result into our tag composite object
+		           err = results.Scan(&user.Id, &user.Name, &user.Email, &user.Level)
+		           if err != nil {
+		               panic(err.Error()) // proper error handling instead of panic in your app
+		           }
+		          usersResults = append(usersResults,user)
+		       }
+fmt.Println(usersResults[0].Name)
 			tpl = template.Must(template.ParseFiles("users.html"))
+			tpl.Execute(w, usersResults)
 		case "/" :
 			tpl = template.Must(template.ParseFiles("index.html"))
+			tpl.Execute(w, nil)
 		default:
 			http.Redirect(w, r, "", 302)
 		}
-	tpl.Execute(w, nil)
+
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
