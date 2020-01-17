@@ -37,22 +37,21 @@ type UserStruct struct {
 }
 
 func findPassword(nameFromForm string) string{
-	//b, err := sql.Open("mysql", "adminPanel:adminPanelPassword@tcp(127.0.0.1:3306)/adminPanel")
-	db, err := sql.Open("sqlite3", "./database.db")
-	if err != nil {
-			panic(err.Error())
-	}
-	// defer the close till after the main function has finished
-	// executing
-	defer db.Close()
+		//b, err := sql.Open("mysql", "adminPanel:adminPanelPassword@tcp(127.0.0.1:3306)/adminPanel")
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+				panic(err.Error())
+		}
+		// defer the close till after the main function has finished
+		// executing
+		defer db.Close()
 
-	var user UserStruct
-	err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", nameFromForm).Scan(&user.PasswordHash)
-	if err != nil {
-    panic(err.Error()) // proper error handling instead of panic in your app
-	}
-	return user.PasswordHash
-
+		var user UserStruct
+		err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", nameFromForm).Scan(&user.PasswordHash)
+		if err != nil {
+	    panic(err.Error()) // proper error handling instead of panic in your app
+		}
+		return user.PasswordHash
 }
 
 func getToken(length int) string {
@@ -75,9 +74,7 @@ func CheckPasswordHash(hash, password  string) bool {
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
-
 	 //fmt.Println(r.URL.Path)
-
 	 session, _ := store.Get(r, "cookie-name")
 
     // Check if user is authenticated
@@ -94,63 +91,56 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			db, _ := sql.Open("sqlite3", "./database.db")
 
 		  results, err := db.Query("SELECT id, name, email, level FROM users")
-		   if err != nil {
-		       panic(err.Error()) // proper error handling instead of panic in your app
-		   }
-		   var usersResults []UserStruct
+		  if err != nil {
+		  	panic(err.Error()) // proper error handling instead of panic in your app
+		  }
+		  var usersResults []UserStruct
 
-		       for results.Next() {
-		           var user UserStruct
-		           // for each row, scan the result into our tag composite object
-		           err = results.Scan(&user.Id, &user.Name, &user.Email, &user.Level)
-		           if err != nil {
-		               panic(err.Error()) // proper error handling instead of panic in your app
-		           }
-		          usersResults = append(usersResults,user)
-		       }
-fmt.Println(usersResults[0].Name)
+		  for results.Next() {
+ 				var user UserStruct
+				// for each row, scan the result into our tag composite object
+				err = results.Scan(&user.Id, &user.Name, &user.Email, &user.Level)
+				if err != nil {
+					panic(err.Error()) // proper error handling instead of panic in your app
+				}
+				usersResults = append(usersResults,user)
+		  }
+			fmt.Println(usersResults[0].Name)
 			tpl = template.Must(template.ParseFiles("users.html"))
 			tpl.Execute(w, usersResults)
+		case "/logout" :
+			// Revoke users authentication
+			session.Values["authenticated"] = false
+			session.Save(r, w)
+			http.Redirect(w, r, "", 302)
 		case "/" :
 			tpl = template.Must(template.ParseFiles("index.html"))
 			tpl.Execute(w, nil)
 		default:
 			http.Redirect(w, r, "", 302)
 		}
-
 }
 
 func login(w http.ResponseWriter, r *http.Request) {
 
-	if r.Method != http.MethodPost {
-		tpl = template.Must(template.ParseFiles("login.html"))
-		tpl.Execute(w, nil)
-            return
-  }
-	session, _ := store.Get(r, "cookie-name")
-	//db, err := sql.Open("sqlite3", ":memory:")
-  //password := "admin"
-  //hash, _ := HashPassword(password)
-	//log.Printf(hash)
+		if r.Method != http.MethodPost {
+			tpl = template.Must(template.ParseFiles("login.html"))
+			tpl.Execute(w, nil)
+			return
+	  }
 
- if r.FormValue("login") != "" && CheckPasswordHash(findPassword(r.FormValue("login")), r.FormValue("password")) {
-	 session.Values["authenticated"] = true
-	 session.Save(r, w)
+		session, _ := store.Get(r, "cookie-name")
+		//db, err := sql.Open("sqlite3", ":memory:")
+	  //password := "admin"
+	  //hash, _ := HashPassword(password)
+		//log.Printf(hash)
+
+		if r.FormValue("login") != "" && CheckPasswordHash(findPassword(r.FormValue("login")), r.FormValue("password")) {
+			session.Values["authenticated"] = true
+			session.Save(r, w)
+	 	}
+		http.Redirect(w, r, "", 302)
 }
-
-	http.Redirect(w, r, "", 302)
-}
-
-func logout(w http.ResponseWriter, r *http.Request) {
-	session, _ := store.Get(r, "cookie-name")
-
-	// Revoke users authentication
-	session.Values["authenticated"] = false
-	session.Save(r, w)
-
-	http.Redirect(w, r, "", 302)
-}
-
 func main() {
 	//v, _ := mem.VirtualMemory()
 //	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
@@ -168,6 +158,5 @@ func main() {
 	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
 	mux.HandleFunc("/", indexHandler)
-	mux.HandleFunc("/logout", logout)
 	http.ListenAndServe(":"+port, mux)
 }
