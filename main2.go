@@ -1,45 +1,63 @@
 package main
 
 import (
-    //"fmt"
-    "database/sql"
-    _ "github.com/mattn/go-sqlite3"
-	   "log"
-    //"strconv"
+    "fmt"
+    "log"
+    "net/http"
+    "github.com/gorilla/websocket"
 )
 
-type UserStruct struct {
-    id   int    `json:"id"`
-    name string `json:"name"`
-    passwordHash string `json:"passwordHash"`
-		email string `json:"email"`
-		level int `json:"level"`
+func homePage(w http.ResponseWriter, r *http.Request) {
+    fmt.Fprintf(w, "Home Page")
+}
+
+func wsEndpoint(w http.ResponseWriter, r *http.Request) {
+    //fmt.Fprintf(w, "Hello World")
+    upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+
+    ws, err := upgrader.Upgrade(w, r, nil)
+    if err != nil {
+      log.Println(err)
+    }
+
+    log.Println("Client Connected")
+    err = ws.WriteMessage(1, []byte("Hi Client!"))
+    if err != nil {
+        log.Println(err)
+    }
+
+   reader(ws)
+}
+
+func setupRoutes() {
+    http.HandleFunc("/", homePage)
+    http.HandleFunc("/ws", wsEndpoint)
+}
+var upgrader = websocket.Upgrader{
+    ReadBufferSize:  1024,
+    WriteBufferSize: 1024,
+}
+func reader(conn *websocket.Conn) {
+    for {
+    // read in a message
+        messageType, p, err := conn.ReadMessage()
+        if err != nil {
+            log.Println(err)
+            return
+        }
+    // print out that message for clarity
+        fmt.Println(string(p))
+
+        if err := conn.WriteMessage(messageType, p); err != nil {
+            log.Println(err)
+            return
+        }
+
+    }
 }
 
 func main() {
-  db, _ := sql.Open("sqlite3", "./database.db")
-
-  results, err := db.Query("SELECT id, name, email, level FROM users")
-   if err != nil {
-       panic(err.Error()) // proper error handling instead of panic in your app
-   }
-   var usersResults []UserStruct
-
-       for results.Next() {
-           var user UserStruct
-           // for each row, scan the result into our tag composite object
-           err = results.Scan(&user.id, &user.name, &user.email, &user.level)
-           if err != nil {
-               panic(err.Error()) // proper error handling instead of panic in your app
-           }
-          usersResults = append(usersResults,user)
-          log.Printf(usersResults[user.id-1].name)
-       }
-
-    // perform a db.Query insert
-//https://freshman.tech/web-development-with-go/
-//https://www.thepolyglotdeveloper.com/2017/04/using-sqlite-database-golang-application/
-//https://tutorialedge.net/golang/golang-mysql-tutorial/
-//https://medium.com/@hugo.bjarred/mysql-and-golang-ea0d620574d2
-
+    fmt.Println("Hello World")
+    setupRoutes()
+    log.Fatal(http.ListenAndServe(":3000", nil))
 }
