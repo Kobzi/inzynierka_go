@@ -376,10 +376,22 @@
 		            <span aria-hidden="true">×</span>
 		          </button>
 		        </div>
-		        <div class="modal-body">Nazwa: <br>Hasło:</div>
+		        <div class="modal-body">
+							<form action="" method="post">
+							 <label for="name">Nazwa</label>
+							 <input type="text" name="name" id="name" class="form-control" required> <br>
+							 <label for="email">Email</label>
+							 <input type="email" name="email" id="email" class="form-control" required> <br>
+							 <label for="password">Hasło tymczasowe</label>
+							 <input type="password" name="password" id="password" class="form-control" required> <br>
+							 <label for="level">Poziom użytkownika (level) </label>
+							 <input type="number" name="level" min="1" max="3" step="1" value="3" class="form-control" required><br>
+							<br>
+						</div>
 		        <div class="modal-footer">
 		          <button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
-		          <a class="btn btn-primary" href="#">Dodaj</a>
+							<input  class="btn btn-primary" type="submit" value="Dodaj">
+						 </form>
 		        </div>
 		      </div>
 		    </div>
