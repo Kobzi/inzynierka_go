@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	//"fmt"
 	"html/template"
 	//"log"
 	"net/http"
@@ -105,7 +105,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 				}
 				usersResults = append(usersResults,user)
 		  }
-			fmt.Println(usersResults[0].Name)
+			//fmt.Println(usersResults[0].Name)
 			tpl = template.Must(template.ParseFiles("users.html"))
 			tpl.Execute(w, usersResults)
 		case "/logout" :

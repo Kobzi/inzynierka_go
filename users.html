@@ -38,13 +38,13 @@
 
 		      <!-- Nav Item - Dashboard -->
 		      <li class="nav-item">
-		        <a class="nav-link" href="index.html">
+		        <a class="nav-link" href="/">
 		          <i class="fas fa-fw fa-tachometer-alt"></i>
 		          <span>Panel sterowania</span></a>
 		      </li>
 					<li class="nav-item active">
-		        <a class="nav-link" href="users.html">
-		          <i class="fas fa-fw fa-tachometer-alt"></i>
+		        <a class="nav-link" href="/users">
+		          <i class="fas fa-fw fa-users"></i>
 		          <span>Użytkownicy</span></a>
 		      </li>
 
@@ -264,13 +264,13 @@
         <div class="container-fluid">
 
           <!-- Page Heading -->
-          <h1 class="h3 mb-2 text-gray-800">Tables</h1>
-          <p class="mb-4">DataTables is a third party plugin that is used to generate the demo table below. For more information about DataTables, please visit the <a target="_blank" href="https://datatables.net">official DataTables documentation</a>.</p>
+          <h1 class="h3 mb-2 text-gray-800">Użytkownicy</h1>
+          <p class="mb-4">Poniższa tabela przedstawia wszystkich stworzonych użytkowników.</p>
 
           <!-- DataTales Example -->
           <div class="card shadow mb-4">
             <div class="card-header py-3">
-              <h6 class="m-0 font-weight-bold text-primary">DataTables Example</h6>
+              <h6 class="m-0 font-weight-bold text-primary">Użytkownicy</h6>
             </div>
             <div class="card-body">
               <div class="table-responsive">
@@ -300,11 +300,23 @@
                       <td>{{ .Name }}</td>
                       <td>{{ .Email }}</td>
                       <td>{{ .Level}}</td>
-                      <td>opcje</td>
+                      <td>
+												<a href="#" class="btn btn-danger btn-circle btn-sm">
+                    		<i class="fas fa-trash"></i>
+												<a href="#" class="btn btn-info btn-circle btn-sm">
+                    		<i class="fas fa-edit"></i>
+                  </a>
+											</td>
                     </tr>
 										{{ end }}
                   </tbody>
                 </table>
+								<a href="#" class="btn btn-primary btn-icon-split">
+                    <span class="icon text-white-50">
+                      <i class="fas fa-plus"></i>
+                    </span>
+                    <span class="text">Dodaj nowego użytkownika</span>
+                  </a>
               </div>
             </div>
           </div>
