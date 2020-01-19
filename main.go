@@ -1,7 +1,7 @@
 package main
 
 import (
-	//"fmt"
+	"fmt"
 	"html/template"
 	//"log"
 	"net/http"
@@ -54,6 +54,26 @@ func findPassword(nameFromForm string) string{
 		return user.PasswordHash
 }
 
+func doQuery(query string){
+	db, err := sql.Open("sqlite3", "./database.db")
+	if err != nil {
+			panic(err.Error())
+	}
+	// defer the close till after the main function has finished
+	// executing
+	defer db.Close()
+
+	insert, err := db.Query(query)
+		fmt.Println(query)
+
+	// if there is an error inserting, handle it
+    if err != nil {
+        panic(err.Error())
+    }
+    // be careful deferring Queries if you are using transactions
+    defer insert.Close()
+}
+
 func getToken(length int) string {
     randomBytes := make([]byte, 32)
     _, err := rand.Read(randomBytes)
@@ -85,6 +105,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
         login(w,r)
         return
     }
+		fmt.Println(session.Values["name"])
+
+		if r.Method == http.MethodPost {
+			hash, _ := HashPassword(r.FormValue("password"))
+			doQuery("INSERT INTO users VALUES( 4, '" +r.FormValue("name")+ "', '" +hash+ "', '" +r.FormValue("email")+ "', " +r.FormValue("level")+ ")" )
+			http.Redirect(w, r, "/users", 302)
+		}
 
 		switch (r.URL.Path) {
 		case "/users" :
@@ -137,6 +164,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 		if r.FormValue("login") != "" && CheckPasswordHash(findPassword(r.FormValue("login")), r.FormValue("password")) {
 			session.Values["authenticated"] = true
+			session.Values["name"] = r.FormValue("login")
 			session.Save(r, w)
 	 	}
 		http.Redirect(w, r, "", 302)
