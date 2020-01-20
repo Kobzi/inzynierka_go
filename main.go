@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
   "golang.org/x/crypto/bcrypt"
+	"strings"
 
 	//"github.com/shirou/gopsutil/mem"
 
@@ -47,31 +48,40 @@ func findPassword(nameFromForm string) string{
 		defer db.Close()
 
 		var user UserStruct
-		err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", nameFromForm).Scan(&user.PasswordHash)
+		err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", strings.ToLower(nameFromForm)).Scan(&user.PasswordHash)
 		if err != nil {
 	    panic(err.Error()) // proper error handling instead of panic in your app
 		}
 		return user.PasswordHash
 }
 
-func doQuery(query string){
-	db, err := sql.Open("sqlite3", "./database.db")
+func doQuery(query string, db *sql.DB){
+	statement, _ := db.Prepare(query)
+	statement.Exec()
+}
+
+func getUsersFromDataBase(db *sql.DB, where string) ([]UserStruct, bool) {
+	//db, _ := sql.Open("sqlite3", "./database.db")
+	results, err := db.Query("SELECT * FROM users" +where)
 	if err != nil {
-			panic(err.Error())
+		panic(err.Error()) // proper error handling instead of panic in your app
 	}
-	// defer the close till after the main function has finished
-	// executing
-	defer db.Close()
+	var usersResults []UserStruct
+	var ifExists bool
+	for results.Next() {
+		var user UserStruct
+		// for each row, scan the result into our tag composite object
+		err = results.Scan(&user.Id, &user.Name, &user.PasswordHash, &user.Email, &user.Level)
+		if err != nil {
+		//	panic(err.Error()) // proper error handling instead of panic in your app
+		ifExists = false
+		} else {
+			ifExists = true
+		}
+			usersResults = append(usersResults,user)
+	}
 
-	insert, err := db.Query(query)
-		fmt.Println(query)
-
-	// if there is an error inserting, handle it
-    if err != nil {
-        panic(err.Error())
-    }
-    // be careful deferring Queries if you are using transactions
-    defer insert.Close()
+		return usersResults, ifExists
 }
 
 func getToken(length int) string {
@@ -107,31 +117,24 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
     }
 		fmt.Println(session.Values["name"])
 
-		if r.Method == http.MethodPost {
-			hash, _ := HashPassword(r.FormValue("password"))
-			doQuery("INSERT INTO users VALUES( 4, '" +r.FormValue("name")+ "', '" +hash+ "', '" +r.FormValue("email")+ "', " +r.FormValue("level")+ ")" )
-			http.Redirect(w, r, "/users", 302)
-		}
-
 		switch (r.URL.Path) {
 		case "/users" :
-			db, _ := sql.Open("sqlite3", "./database.db")
+			db, err := sql.Open("sqlite3", "./database.db")
+			if err != nil {
+					panic(err.Error())
+			}
+			if r.Method == http.MethodPost {
+				hash, _ := HashPassword(r.FormValue("password"))
+				doQuery("INSERT INTO users VALUES( 4, '" +strings.ToLower(r.FormValue("name"))+ "', '" +hash+ "', '" +strings.ToLower(r.FormValue("email"))+ "', " +r.FormValue("level")+ ")", db )
+				http.Redirect(w, r, "/users", 302)
+			}
+			// defer the close till after the main function has finished
+			// executing
+			defer db.Close()
 
-		  results, err := db.Query("SELECT id, name, email, level FROM users")
-		  if err != nil {
-		  	panic(err.Error()) // proper error handling instead of panic in your app
-		  }
 		  var usersResults []UserStruct
+			usersResults, _ = getUsersFromDataBase(db, "")
 
-		  for results.Next() {
- 				var user UserStruct
-				// for each row, scan the result into our tag composite object
-				err = results.Scan(&user.Id, &user.Name, &user.Email, &user.Level)
-				if err != nil {
-					panic(err.Error()) // proper error handling instead of panic in your app
-				}
-				usersResults = append(usersResults,user)
-		  }
 			//fmt.Println(usersResults[0].Name)
 			tpl = template.Must(template.ParseFiles("users.html"))
 			tpl.Execute(w, usersResults)
@@ -157,16 +160,22 @@ func login(w http.ResponseWriter, r *http.Request) {
 	  }
 
 		session, _ := store.Get(r, "cookie-name")
-		//db, err := sql.Open("sqlite3", ":memory:")
-	  //password := "admin"
-	  //hash, _ := HashPassword(password)
-		//log.Printf(hash)
 
-		if r.FormValue("login") != "" && CheckPasswordHash(findPassword(r.FormValue("login")), r.FormValue("password")) {
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+				panic(err.Error())
+		}
+
+		var usersResults []UserStruct
+		var ifExists bool
+		usersResults, ifExists = getUsersFromDataBase(db, (" WHERE name='"+ strings.ToLower(r.FormValue("login"))+ "'"))
+		//usersResults.PasswordHash
+		if r.FormValue("login") != "" && ifExists && CheckPasswordHash(usersResults[0].PasswordHash, r.FormValue("password")) {
 			session.Values["authenticated"] = true
 			session.Values["name"] = r.FormValue("login")
 			session.Save(r, w)
 	 	}
+
 		http.Redirect(w, r, "", 302)
 }
 func main() {
