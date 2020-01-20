@@ -37,23 +37,6 @@ type UserStruct struct {
 		Level int `json:"level"`
 }
 
-func findPassword(nameFromForm string) string{
-		//b, err := sql.Open("mysql", "adminPanel:adminPanelPassword@tcp(127.0.0.1:3306)/adminPanel")
-		db, err := sql.Open("sqlite3", "./database.db")
-		if err != nil {
-				panic(err.Error())
-		}
-		// defer the close till after the main function has finished
-		// executing
-		defer db.Close()
-
-		var user UserStruct
-		err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", strings.ToLower(nameFromForm)).Scan(&user.PasswordHash)
-		if err != nil {
-	    panic(err.Error()) // proper error handling instead of panic in your app
-		}
-		return user.PasswordHash
-}
 
 func doQuery(query string, db *sql.DB){
 	statement, _ := db.Prepare(query)
@@ -83,6 +66,9 @@ func getUsersFromDataBase(db *sql.DB, where string) ([]UserStruct, bool) {
 
 		return usersResults, ifExists
 }
+
+//var user UserStruct
+//err = db.QueryRow("SELECT passwordHash FROM users WHERE name = ?", strings.ToLower(nameFromForm)).Scan(&user.PasswordHash)
 
 func getToken(length int) string {
     randomBytes := make([]byte, 32)
@@ -172,7 +158,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		//usersResults.PasswordHash
 		if r.FormValue("login") != "" && ifExists && CheckPasswordHash(usersResults[0].PasswordHash, r.FormValue("password")) {
 			session.Values["authenticated"] = true
-			session.Values["name"] = r.FormValue("login")
+			session.Values["name"] = strings.ToLower(r.FormValue("login"))
 			session.Save(r, w)
 	 	}
 
