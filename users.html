@@ -296,22 +296,24 @@
                   <tbody>
 										{{ range .}}
 										<tr>
-                      <td>{{ .Id }}</td>
-                      <td>{{ .Name }}</td>
-                      <td>{{ .Email }}</td>
-                      <td>{{ .Level}}</td>
+                      <td id="table_id_{{ .Id }}">{{ .Id }}</td>
+                      <td id="table_name_{{ .Id }}">{{ .Name }}</td>
+                      <td id="table_email_{{ .Id }}">{{ .Email }}</td>
+                      <td id="table_level_{{ .Id }}">{{ .Level }}</td>
                       <td>
-												<a href="#" class="btn btn-danger btn-circle btn-sm">
-                    		<i class="fas fa-trash"></i>
-												<a href="#" class="btn btn-info btn-circle btn-sm">
-                    		<i class="fas fa-edit"></i>
+ 													<button type="button" value="delete_{{ .Id }}" class="btn btn-danger btn-circle btn-sm user-delete" data-toggle="modal" data-target="#deleteModal">
+															<i class="fas fa-trash"></i>
+													</button>
+														<button type="button"value="{{ .Id }}" class="btn btn-info btn-circle btn-sm user-edit" data-toggle="modal" data-target="#addUserModal">
+	                    		<i class="fas fa-edit"></i>
+												</button>
                   </a>
 											</td>
                     </tr>
 										{{ end }}
                   </tbody>
                 </table>
-								<a href="#" class="btn btn-primary btn-icon-split" data-toggle="modal" data-target="#addUserModal">
+								<a href="#" class="btn btn-primary btn-icon-split" onclick="ClearForm()" data-toggle="modal" data-target="#addUserModal">
                     <span class="icon text-white-50">
                       <i class="fas fa-plus"></i>
                     </span>
@@ -366,18 +368,41 @@
 		    </div>
 		  </div>
 
+			<!-- Delete Modal-->
+		 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+			 <div class="modal-dialog" role="document">
+				 <div class="modal-content">
+					 <div class="modal-header">
+						 <h5 class="modal-title" id="exampleModalLabel">Usuwanie użytkownika</h5>
+						 <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+							 <span aria-hidden="true"></span>
+						 </button>
+					 </div>
+					 <div class="modal-body">Jesteś pewien, że chcesz usunąc tego użytkownika?</div>
+					 <div class="modal-footer">
+						 <button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
+						 <form action="" method="post">
+							 <button type="submit" id="user-delete-button" class="btn btn-primary" name="submit">
+									 Tak, usuń
+							 </button>
+						 </form>
+					 </div>
+				 </div>
+			 </div>
+		 </div>
+
 
 			<div class="modal fade" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
 		    <div class="modal-dialog" role="document">
 		      <div class="modal-content">
 		        <div class="modal-header">
-		          <h5 class="modal-title">Dodawanie Nowego użytkownika</h5>
+		          <h5 id="titleAddUser" class="modal-title">Dodawanie Nowego użytkownika</h5>
 		          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
 		            <span aria-hidden="true">×</span>
 		          </button>
 		        </div>
 		        <div class="modal-body">
-							<form action="" method="post">
+							<form id="addUserForm" action="" method="post">
 							 <label for="name">Nazwa</label>
 							 <input type="text" name="name" id="name" class="form-control" required> <br>
 							 <label for="email">Email</label>
@@ -385,12 +410,12 @@
 							 <label for="password">Hasło tymczasowe</label>
 							 <input type="password" name="password" id="password" class="form-control" required> <br>
 							 <label for="level">Poziom użytkownika (level) </label>
-							 <input type="number" name="level" min="1" max="3" step="1" value="3" class="form-control" required><br>
+							 <input type="number" id="level" name="level" min="1" max="3" step="1" value="3" class="form-control" required><br>
 							<br>
 						</div>
 		        <div class="modal-footer">
 		          <button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
-							<input  class="btn btn-primary" type="submit" value="Dodaj">
+							<button id="addUser" class="btn btn-primary" type="submit" value="add" name="submit"> Dodaj</button>
 						 </form>
 		        </div>
 		      </div>
@@ -413,6 +438,43 @@
 
   <!-- Page level custom scripts -->
   <script src="assets/js/demo/datatables-demo.js"></script>
+
+	<script type='text/javascript'>
+	window.onload = function () {
+		var table = document.getElementById('dataTable');
+		var rows = table.getElementsByClassName('user-edit');
+		var rows2 = table.getElementsByClassName('user-delete');
+
+		for(var x = 0; x < rows2.length; x++) {
+			rows2[x].onclick = function() {
+				document.getElementById('user-delete-button').value = this.value;
+			}
+		};
+
+		for(var x = 0; x < rows.length; x++) {
+			rows[x].onclick = function() {
+				document.getElementById('name').value= document.getElementById('table_name_'+this.value).innerText;
+				document.getElementById('email').value= document.getElementById('table_email_'+this.value).innerText;
+				document.getElementById('level').value= document.getElementById('table_level_'+this.value).innerText;
+				document.getElementById('addUser').innerText = "Edytuj";
+				document.getElementById('titleAddUser').innerText = "Edytowanie istniejącego użytkownika";
+				document.getElementById('addUser').value="edit_"+this.value;
+				document.getElementById("password").required = false;
+				document.getElementById("password").placeholder = "Jeśli nic nie wpiszesz, hasło nie zostanie zmienione";
+
+			}
+		};
+		}
+		function ClearForm(){
+			document.getElementById('addUser').innerText = "Dodaj"
+			document.getElementById("addUserForm").reset();
+			document.getElementById('titleAddUser').innerText = "Dodawanie Nowego użytkownika";
+			document.getElementById('addUser').value="add";
+			document.getElementById("password").required = true;
+			document.getElementById("password").placeholder = "";
+
+		}
+	</script>
 
 		</body>
 

@@ -8,6 +8,7 @@ import (
 	"os"
   "golang.org/x/crypto/bcrypt"
 	"strings"
+	"strconv"
 
 	//"github.com/shirou/gopsutil/mem"
 
@@ -39,6 +40,7 @@ type UserStruct struct {
 
 
 func doQuery(query string, db *sql.DB){
+	fmt.Println(query)
 	statement, _ := db.Prepare(query)
 	statement.Exec()
 }
@@ -109,24 +111,57 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 					panic(err.Error())
 			}
+
+			var usersResults []UserStruct
+			usersResults, _ = getUsersFromDataBase(db, "")
+
 			if r.Method == http.MethodPost {
-				hash, _ := HashPassword(r.FormValue("password"))
-				doQuery("INSERT INTO users VALUES( 4, '" +strings.ToLower(r.FormValue("name"))+ "', '" +hash+ "', '" +strings.ToLower(r.FormValue("email"))+ "', " +r.FormValue("level")+ ")", db )
-				http.Redirect(w, r, "/users", 302)
+				s:= strings.Split(r.FormValue("submit"), "_")
+
+				switch (s[0]) {
+				case "add" :
+					var ifExists bool
+					_, ifExists = getUsersFromDataBase(db, (" WHERE name='"+ strings.ToLower(r.FormValue("name"))+ "'"))
+					if (!ifExists) {
+						hash, _ := HashPassword(r.FormValue("password"))
+						doQuery("INSERT INTO users(name, passwordHash, email, level) VALUES('" +strings.ToLower(r.FormValue("name"))+ "', '" +hash+ "', '" +strings.ToLower(r.FormValue("email"))+ "', " +r.FormValue("level")+ ")", db )
+					}
+					http.Redirect(w, r, "/users", 302)
+
+				case "edit":
+					var hash string
+					if (r.FormValue("password") != "" ) {
+						hash, _ = HashPassword(r.FormValue("password"))
+					} else {
+						idFromSubmit, _ := strconv.ParseInt(s[1], 0, 64)
+						hash = usersResults[idFromSubmit].PasswordHash
+					}
+					doQuery("UPDATE users SET name='"+strings.ToLower(r.FormValue("name"))+ "', passwordHash='"+hash+ "', email='" +strings.ToLower(r.FormValue("email"))+ "', level=" +r.FormValue("level")+ " WHERE id=" +s[1], db)
+					http.Redirect(w, r, "/users", 302)
+
+				case "delete" :
+					if (session.Values["id"] != s[1]) {
+						doQuery("DELETE FROM users WHERE id="+s[1], db)
+					}
+					http.Redirect(w, r, "/users", 302)
+
+				default:
+					http.Redirect(w, r, "/users", 302)
+				}
 			}
 			// defer the close till after the main function has finished
 			// executing
 			defer db.Close()
 
-		  var usersResults []UserStruct
-			usersResults, _ = getUsersFromDataBase(db, "")
-
 			//fmt.Println(usersResults[0].Name)
 			tpl = template.Must(template.ParseFiles("users.html"))
 			tpl.Execute(w, usersResults)
+
 		case "/logout" :
 			// Revoke users authentication
 			session.Values["authenticated"] = false
+			session.Values["name"] = ""
+			session.Values["id"] = ""
 			session.Save(r, w)
 			http.Redirect(w, r, "", 302)
 		case "/" :
@@ -152,13 +187,14 @@ func login(w http.ResponseWriter, r *http.Request) {
 				panic(err.Error())
 		}
 
-		var usersResults []UserStruct
+		var userResults []UserStruct
 		var ifExists bool
-		usersResults, ifExists = getUsersFromDataBase(db, (" WHERE name='"+ strings.ToLower(r.FormValue("login"))+ "'"))
+		userResults, ifExists = getUsersFromDataBase(db, (" WHERE name='"+ strings.ToLower(r.FormValue("login"))+ "'"))
 		//usersResults.PasswordHash
-		if r.FormValue("login") != "" && ifExists && CheckPasswordHash(usersResults[0].PasswordHash, r.FormValue("password")) {
+		if r.FormValue("login") != "" && ifExists && CheckPasswordHash(userResults[0].PasswordHash, r.FormValue("password")) {
 			session.Values["authenticated"] = true
 			session.Values["name"] = strings.ToLower(r.FormValue("login"))
+			session.Values["id"] = strconv.Itoa(userResults[0].Id)
 			session.Save(r, w)
 	 	}
 
