@@ -134,7 +134,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 						hash, _ = HashPassword(r.FormValue("password"))
 					} else {
 						idFromSubmit, _ := strconv.ParseInt(s[1], 0, 64)
-						hash = usersResults[idFromSubmit].PasswordHash
+						hash = usersResults[idFromSubmit-1].PasswordHash
 					}
 					doQuery("UPDATE users SET name='"+strings.ToLower(r.FormValue("name"))+ "', passwordHash='"+hash+ "', email='" +strings.ToLower(r.FormValue("email"))+ "', level=" +r.FormValue("level")+ " WHERE id=" +s[1], db)
 					http.Redirect(w, r, "/users", 302)
