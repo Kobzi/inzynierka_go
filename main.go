@@ -38,11 +38,41 @@ type UserStruct struct {
 		Level int `json:"level"`
 }
 
+type GameServers struct {
+		Id   int    `json:"id"`
+		Type string `json:"type"`
+		Name string `json:"name"`
+		Localization string `json:"localization"`
+		IsItOn bool `json:"isiton"`
+}
+
 
 func doQuery(query string, db *sql.DB){
 	fmt.Println(query)
 	statement, _ := db.Prepare(query)
 	statement.Exec()
+}
+
+func getServersFromDataBase(db *sql.DB, where string) ([]GameServers, bool) {
+	//db, _ := sql.Open("sqlite3", "./database.db")
+	results, err := db.Query("SELECT * FROM servers" +where)
+	if err != nil {
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
+	var gameServers []GameServers
+	var ifExists bool
+	for results.Next() {
+		var gameServer GameServers
+		// for each row, scan the result into our tag composite object
+		err = results.Scan(&gameServer.Id, &gameServer.Type, &gameServer.Name, &gameServer.Localization, &gameServer.IsItOn)
+		if err != nil {
+			panic(err.Error()) // proper error handling instead of panic in your app
+		} else {
+			ifExists = true
+		}
+			gameServers = append(gameServers,gameServer)
+	}
+		return gameServers, ifExists
 }
 
 func getUsersFromDataBase(db *sql.DB, where string) ([]UserStruct, bool) {
@@ -104,13 +134,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
         return
     }
 		fmt.Println(session.Values["name"])
+		db, err := sql.Open("sqlite3", "./database.db")
+		if err != nil {
+				panic(err.Error())
+		}
 
 		switch (r.URL.Path) {
 		case "/users" :
-			db, err := sql.Open("sqlite3", "./database.db")
-			if err != nil {
-					panic(err.Error())
-			}
 
 			var usersResults []UserStruct
 			usersResults, _ = getUsersFromDataBase(db, "")
@@ -165,8 +195,14 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			session.Save(r, w)
 			http.Redirect(w, r, "", 302)
 		case "/" :
+			var gameServersResults []GameServers
+			gameServersResults, _ = getServersFromDataBase(db, "")
+
+
+
+
 			tpl = template.Must(template.ParseFiles("index.html"))
-			tpl.Execute(w, nil)
+			tpl.Execute(w, gameServersResults)
 		default:
 			http.Redirect(w, r, "", 302)
 		}
@@ -206,6 +242,15 @@ func main() {
 
     // convert to JSON. String() is also implemented
   //  fmt.Println(v)
+
+	//command := "Tell Application \"iTunes\" to playpause"
+
+	    //c := exec.Command("/usr/bin/osascript", "-e", command)
+		//	if err := c.Run(); err != nil {
+	//		 fmt.Println(err.String())
+	// }
+
+
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "3000"

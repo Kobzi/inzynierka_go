@@ -378,49 +378,38 @@
 											<table class="table">
 											  <thead>
 											    <tr>
-											      <th scope="col">#</th>
-											      <th scope="col">GRA</th>
-											      <th scope="col">Liczba graczy</th>
-											      <th scope="col">Mapa</th>
-														<th scope="col">Opcje</th>
+											      <th>ID</th>
+											      <th>Nazwa Servera</th>
+											      <th>Liczba graczy</th>
+											      <th>Mapa</th>
+														<th>Lokalizacja</th>
+														<th>Opcje</th>
 											    </tr>
 											  </thead>
+												{{ range .}}
 											  <tbody>
 											    <tr>
-											      <th scope="row">1</th>
-											      <td>CSGO #1</td>
-											      <td>14/20</td>
-											      <td>de_inferno</td>
-														<td>Włącz, wyłącz, restart</td>
+											      <th>{{ .Id }}</th>
+											      <td>{{ .Name }}</td>
+											      <td></td>
+											      <td></td>
+														<td>{{ .Localization }}</td>
+														<td>
+															<button type="button" value="" class="btn btn-success btn-circle btn-sm" >
+																	<i class="fas fa-play"></i>
+															</button>
+															<button type="button" value="" class="btn btn-warning btn-circle btn-sm">
+																	<i class="fas fa-pause"></i>
+															</button>
+															<button type="button" value="" class="btn btn-info btn-circle btn-sm" >
+																	<i class="fas fa-download"></i>
+															</button>
+															<button type="button" value="" class="btn btn-danger btn-circle btn-sm">
+																	<i class="fas fa-trash"></i>
+															</button>
+														</td>
 											    </tr>
-											    <tr>
-											      <th scope="row">2</th>
-											      <td>CSGO #2</td>
-											      <td>2/20</td>
-											      <td>de_dust2</td>
-														<td>Włącz, wyłącz, restart</td>
-											    </tr>
-											    <tr>
-											      <th scope="row">3</th>
-											      <td>CS:S #1</td>
-											      <td>0/20</td>
-											      <td>de_mirage</td>
-														<td>Włącz, wyłącz, restart</td>
-											    </tr>
-													<tr>
-											      <th scope="row">4</th>
-											      <td>CS:S #2</td>
-											      <td>15/25</td>
-											      <td>de_tuscan</td>
-														<td>Włącz, wyłącz, restart</td>
-											    </tr>
-													<tr>
-											      <th scope="row">5</th>
-											      <td>TF2</td>
-											      <td>25/30</td>
-											      <td>cp_snowplow</td>
-														<td>Włącz, wyłącz, restart</td>
-											    </tr>
+											  {{ end }}
 											  </tbody>
 										</table>
 									</div>
@@ -545,6 +534,37 @@
 		        <div class="modal-footer">
 		          <button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
 		          <a class="btn btn-primary" href="/logout">Wyloguj</a>
+		        </div>
+		      </div>
+		    </div>
+		  </div>
+
+
+			<div class="modal fade" id="addServerModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+		    <div class="modal-dialog" role="document">
+		      <div class="modal-content">
+		        <div class="modal-header">
+		          <h5 id="titleAddServer" class="modal-title">Dodawanie Nowego użytkownika</h5>
+		          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+		            <span aria-hidden="true">×</span>
+		          </button>
+		        </div>
+		        <div class="modal-body">
+							<form id="addServerForm" action="" method="post">
+							 <label for="name">Nazwa</label>
+							 <input type="text" name="name" id="name" class="form-control" required> <br>
+							 <label for="email">Email</label>
+							 <input type="email" name="email" id="email" class="form-control" required> <br>
+							 <label for="password">Hasło tymczasowe</label>
+							 <input type="password" name="password" id="password" class="form-control" required> <br>
+							 <label for="level">Poziom użytkownika (level) </label>
+							 <input type="number" id="level" name="level" min="1" max="3" step="1" value="3" class="form-control" required><br>
+							<br>
+						</div>
+		        <div class="modal-footer">
+		          <button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
+							<button id="addUser" class="btn btn-primary" type="submit" value="add" name="submit"> Dodaj</button>
+						 </form>
 		        </div>
 		      </div>
 		    </div>
