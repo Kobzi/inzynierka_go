@@ -43,6 +43,7 @@ type GameServers struct {
 		Type string `json:"type"`
 		Name string `json:"name"`
 		Localization string `json:"localization"`
+		StartCommands string `json:"startcommands"`
 		IsItOn bool `json:"isiton"`
 }
 
@@ -64,7 +65,7 @@ func getServersFromDataBase(db *sql.DB, where string) ([]GameServers, bool) {
 	for results.Next() {
 		var gameServer GameServers
 		// for each row, scan the result into our tag composite object
-		err = results.Scan(&gameServer.Id, &gameServer.Type, &gameServer.Name, &gameServer.Localization, &gameServer.IsItOn)
+		err = results.Scan(&gameServer.Id, &gameServer.Type, &gameServer.Name, &gameServer.Localization, &gameServer.StartCommands, &gameServer.IsItOn)
 		if err != nil {
 			panic(err.Error()) // proper error handling instead of panic in your app
 		} else {
