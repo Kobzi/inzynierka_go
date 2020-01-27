@@ -47,6 +47,14 @@ type GameServers struct {
 		IsItOn bool `json:"isiton"`
 }
 
+type Event struct {
+		ID string `json:"id"`
+		MemoryTotal string `json:"memorytotal"`
+		MemoryFree string `json:"memoryfree"`
+		OS string `json:"os"`
+		CPU string `json:"cpu"`
+}
+
 
 func doQuery(query string, db *sql.DB){
 	fmt.Println(query)
@@ -195,6 +203,9 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			session.Values["id"] = ""
 			session.Save(r, w)
 			http.Redirect(w, r, "", 302)
+		case "/apihardware" :
+			v, _ := mem.VirtualMemory()
+
 		case "/" :
 			var gameServersResults []GameServers
 			gameServersResults, _ = getServersFromDataBase(db, "")
