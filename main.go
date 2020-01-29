@@ -9,8 +9,12 @@ import (
   "golang.org/x/crypto/bcrypt"
 	"strings"
 	"strconv"
+	"encoding/json"
+	"time"
 
-	//"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/disk"
+	"github.com/shirou/gopsutil/cpu"
 
 	"crypto/rand"
   "encoding/base64"
@@ -47,12 +51,18 @@ type GameServers struct {
 		IsItOn bool `json:"isiton"`
 }
 
-type Event struct {
-		ID string `json:"id"`
+type HardwareStruct struct {
+		//ID string `json:"id"`
 		MemoryTotal string `json:"memorytotal"`
-		MemoryFree string `json:"memoryfree"`
-		OS string `json:"os"`
-		CPU string `json:"cpu"`
+		MemoryPercentOfUsed string `json:"memorypercentofused"`
+		HDDTotal string `json:"hddtotal"`
+		HDDPercentOfUsed string `json:"hddpercentofused"`
+	//	OS string `json:"os"`
+		CPUUsage string `json:"cpuusage"`
+}
+func FloatToString(input_num float64) string {
+    // to convert a float number to a string
+    return strconv.FormatFloat(input_num, 'f', -1, 64)
 }
 
 
@@ -205,6 +215,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "", 302)
 		case "/apihardware" :
 			v, _ := mem.VirtualMemory()
+			hdd, _ := disk.Usage("/")
+			cpuPercent, _ :=cpu.Percent(time.Second,false)
+		//	cpu, _ := cpu.Times(false)
+			//var	hw
+			hw := HardwareStruct {
+				strconv.FormatUint(v.Total, 10),
+				//strconv.FormatUint(v.Free, 10) }
+				FloatToString(v.UsedPercent),
+				strconv.FormatUint(hdd.Total, 10),
+				FloatToString(hdd.UsedPercent),
+				FloatToString(cpuPercent[0])}
+
+
+			json.NewEncoder(w).Encode(hw)
 
 		case "/" :
 			var gameServersResults []GameServers
