@@ -592,6 +592,17 @@
 		  <script src="assets/js/demo/chart-pie-demo.js"></script>
 
 			<script>
+			function formatBytes(bytes, decimals = 2) {
+	    if (bytes === 0) return '0 Bytes';
+
+	    const k = 1024;
+	    const dm = decimals < 0 ? 0 : decimals;
+	    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+	    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+	    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+		}
 			$(document).ready(function(){
 				sendRequest();
 				function sendRequest(){
@@ -605,9 +616,9 @@
 						document.getElementById('progress-bar-cpu').style.width = data['cpuusage']+'%';
 						document.getElementById('progress-bar-cpu-text').innerHTML = data['cpuusage']+'%';
 						document.getElementById('progress-bar-memory').style.width = data['memorypercentofused']+'%';
-						document.getElementById('progress-bar-memory-text').innerHTML = data['memoryused']+'/' + data['memorytotal']+ ' GB';
+						document.getElementById('progress-bar-memory-text').innerHTML = formatBytes(data['memoryused'])+' / ' + formatBytes(data['memorytotal']);
 						document.getElementById('progress-bar-hdd').style.width = data['hddpercentofused']+'%';
-						document.getElementById('progress-bar-hdd-text').innerHTML = data['hddused']+'/' + data['hddtotal']+ ' GB';
+						document.getElementById('progress-bar-hdd-text').innerHTML = formatBytes(data['hddused'])+' / ' + formatBytes(data['hddtotal']);
 
 						/*$.getJSON( "ajax/test.json", function( data ) {
 	   					var items = [];

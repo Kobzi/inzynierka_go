@@ -63,11 +63,22 @@ type HardwareStruct struct {
 	//	OS string `json:"os"`
 		CPUUsage string `json:"cpuusage"`
 }
-func FloatToString(input_num float64) string {
-    // to convert a float number to a string
-    return strconv.FormatFloat(input_num, 'f', -1, 64)
-}
 
+func getHardwareInfo() HardwareStruct {
+	v, _ := mem.VirtualMemory()
+	hdd, _ := disk.Usage("/")
+	cpuPercent, _ :=cpu.Percent(time.Second*5,false)
+
+	hw := HardwareStruct {
+		strconv.FormatUint(v.Total, 10),
+		strconv.FormatUint(v.Used, 10),
+		strconv.FormatFloat(v.UsedPercent, 'f', 2, 64),
+		strconv.FormatUint(hdd.Total, 10),
+		strconv.FormatUint(hdd.Used, 10),
+		strconv.FormatFloat(hdd.UsedPercent, 'f', 2, 64),
+		strconv.FormatFloat(cpuPercent[0], 'f', 2, 64) }
+		return hw
+}
 
 func doQuery(query string, db *sql.DB){
 	fmt.Println(query)
@@ -216,35 +227,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			session.Values["id"] = ""
 			session.Save(r, w)
 			http.Redirect(w, r, "", 302)
+
 		case "/apihardware" :
-			v, _ := mem.VirtualMemory()
-			hdd, _ := disk.Usage("/")
-			cpuPercent, _ :=cpu.Percent(time.Second,false)
-		//	cpu, _ := cpu.Times(false)
-			//var	hw
-			hw := HardwareStruct {
-				//strconv.FormatUint((v.Total/1024/1024/1024), 10),
-				//strconv.FormatUint(v.Free, 10) }
-				strconv.FormatFloat((float64(v.Total)/1024/1024/1024), 'f', 2, 64),
-				strconv.FormatFloat((float64(v.Used)/1024/1024/1024), 'f', 2, 64),
-				//strconv.FormatUint(v.Used,10),
-				FloatToString(v.UsedPercent),
-				strconv.FormatFloat((float64(hdd.Total)/1024/1024/1024), 'f', 3, 64),
-				//strconv.FormatUint(hdd.Total, 10),
-				strconv.FormatFloat((float64(hdd.Used)/1024/1024/1024), 'f', 3, 64),
-
-				strconv.FormatFloat(hdd.UsedPercent, 'f', 2, 64),
-				//FloatToString(hdd.UsedPercent),
-				strconv.FormatFloat(cpuPercent[0], 'f', 2, 64)}
-				//FloatToString(cpuPercent[0])}
-
-
-			json.NewEncoder(w).Encode(hw)
+			json.NewEncoder(w).Encode(getHardwareInfo())
 
 		case "/" :
 			var gameServersResults []GameServers
 			gameServersResults, _ = getServersFromDataBase(db, "")
-
 
 
 
@@ -284,12 +273,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "", 302)
 }
 func main() {
-	//v, _ := mem.VirtualMemory()
-//	fmt.Printf("Total: %v, Free:%v, UsedPercent:%f%%\n", v.Total, v.Free, v.UsedPercent)
-
-    // convert to JSON. String() is also implemented
-  //  fmt.Println(v)
-
+	
 	//command := "Tell Application \"iTunes\" to playpause"
 
 	    //c := exec.Command("/usr/bin/osascript", "-e", command)
