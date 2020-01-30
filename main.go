@@ -54,8 +54,11 @@ type GameServers struct {
 type HardwareStruct struct {
 		//ID string `json:"id"`
 		MemoryTotal string `json:"memorytotal"`
+		MemoryUsed string `json:"memoryused"`
+
 		MemoryPercentOfUsed string `json:"memorypercentofused"`
 		HDDTotal string `json:"hddtotal"`
+		HDDUsed string `json:"hddused"`
 		HDDPercentOfUsed string `json:"hddpercentofused"`
 	//	OS string `json:"os"`
 		CPUUsage string `json:"cpuusage"`
@@ -220,12 +223,20 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		//	cpu, _ := cpu.Times(false)
 			//var	hw
 			hw := HardwareStruct {
-				strconv.FormatUint(v.Total, 10),
+				//strconv.FormatUint((v.Total/1024/1024/1024), 10),
 				//strconv.FormatUint(v.Free, 10) }
+				strconv.FormatFloat((float64(v.Total)/1024/1024/1024), 'f', 2, 64),
+				strconv.FormatFloat((float64(v.Used)/1024/1024/1024), 'f', 2, 64),
+				//strconv.FormatUint(v.Used,10),
 				FloatToString(v.UsedPercent),
-				strconv.FormatUint(hdd.Total, 10),
-				FloatToString(hdd.UsedPercent),
-				FloatToString(cpuPercent[0])}
+				strconv.FormatFloat((float64(hdd.Total)/1024/1024/1024), 'f', 3, 64),
+				//strconv.FormatUint(hdd.Total, 10),
+				strconv.FormatFloat((float64(hdd.Used)/1024/1024/1024), 'f', 3, 64),
+
+				strconv.FormatFloat(hdd.UsedPercent, 'f', 2, 64),
+				//FloatToString(hdd.UsedPercent),
+				strconv.FormatFloat(cpuPercent[0], 'f', 2, 64)}
+				//FloatToString(cpuPercent[0])}
 
 
 			json.NewEncoder(w).Encode(hw)

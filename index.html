@@ -277,11 +277,11 @@
 		                  <div class="row no-gutters align-items-center">
 		                    <div class="col mr-2">
 		                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Zużycie CPU</div>
-		                      <div class="h5 mb-0 font-weight-bold text-gray-800">30%</div>
+		                      <div class="h5 mb-0 font-weight-bold text-gray-800" id="progress-bar-cpu-text">30%</div>
 		                    </div>
 												<div class="col">
 													<div class="progress progress-sm mr-2">
-														<div class="progress-bar bg-primary" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+														<div class="progress-bar bg-primary" id="progress-bar-cpu" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
 													</div>
 												</div>
 		                  </div>
@@ -296,11 +296,11 @@
 		                  <div class="row no-gutters align-items-center">
 		                    <div class="col mr-2">
 		                      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Zużycie RAMu</div>
-		                      <div class="h5 mb-0 font-weight-bold text-gray-800">4.80/16<br>[GB]</div>
+		                      <div class="h5 mb-0 font-weight-bold text-gray-800" id="progress-bar-memory-text">4.80/16<br>[GB]</div>
 		                    </div>
 												<div class="col">
 													<div class="progress progress-sm mr-2">
-														<div class="progress-bar bg-success" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
+														<div class="progress-bar bg-success" id="progress-bar-memory" role="progressbar" style="width: 30%" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100"></div>
 													</div>
 												</div>
 		                  </div>
@@ -317,11 +317,11 @@
 		                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Zapełnienie dysku</div>
 		                      <div class="row no-gutters align-items-center">
 		                        <div class="col-auto">
-		                          <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">120/150</br>[GB]</div>
+		                          <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800" id="progress-bar-hdd-text">120/150</br>[GB]</div>
 		                        </div>
 		                        <div class="col">
 		                          <div class="progress progress-sm mr-2">
-		                            <div class="progress-bar bg-info" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
+		                            <div class="progress-bar bg-info" id="progress-bar-hdd" role="progressbar" style="width: 80%" aria-valuenow="80" aria-valuemin="0" aria-valuemax="100"></div>
 		                          </div>
 		                        </div>
 		                      </div>
@@ -339,7 +339,7 @@
 		                  <div class="row no-gutters align-items-center">
 		                    <div class="col mr-2">
 		                      <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Wystąpienia błędów w ciągu 24h</div>
-		                      <div class="h5 mb-0 font-weight-bold text-gray-800">3</div>
+		                      <div class="h5 mb-0 font-weight-bold text-gray-800">0</div>
 		                    </div>
 		                    <div class="col-auto">
 		                      <i class="fas fa-comments fa-2x text-gray-300"></i>
@@ -590,6 +590,47 @@
 		  <!-- Page level custom scripts -->
 		  <script src="assets/js/demo/chart-area-demo.js"></script>
 		  <script src="assets/js/demo/chart-pie-demo.js"></script>
+
+			<script>
+			$(document).ready(function(){
+				sendRequest();
+				function sendRequest(){
+					$.ajax({
+						dataType: "json",
+						url: "/apihardware",
+						success:
+					function(data){
+						//alert("done");
+						console.log(data);
+						document.getElementById('progress-bar-cpu').style.width = data['cpuusage']+'%';
+						document.getElementById('progress-bar-cpu-text').innerHTML = data['cpuusage']+'%';
+						document.getElementById('progress-bar-memory').style.width = data['memorypercentofused']+'%';
+						document.getElementById('progress-bar-memory-text').innerHTML = data['memoryused']+'/' + data['memorytotal']+ ' GB';
+						document.getElementById('progress-bar-hdd').style.width = data['hddpercentofused']+'%';
+						document.getElementById('progress-bar-hdd-text').innerHTML = data['hddused']+'/' + data['hddtotal']+ ' GB';
+
+						/*$.getJSON( "ajax/test.json", function( data ) {
+	   					var items = [];
+							alert("done2");
+	   					$.each( data, function( key, val ) {
+					     items.push( "<li id='" + key + "'>" + val + "</li>" );
+	   		 			});
+
+	   			$( "<ul/>", {
+	     		"class": "my-new-list",
+			     html: items.join( "" )
+	   				}).appendTo( "body" );
+	 				});*/
+
+					},
+					complete: function() {
+		 					// Schedule the next request when the current one's complete
+		 					setInterval(sendRequest, 5000); // The interval set to 5 seconds
+					}
+				});
+				};
+			});
+			</script>
 
 		</body>
 
