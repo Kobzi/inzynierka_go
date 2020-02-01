@@ -67,7 +67,7 @@ type HardwareStruct struct {
 func getHardwareInfo() HardwareStruct {
 	v, _ := mem.VirtualMemory()
 	hdd, _ := disk.Usage("/")
-	cpuPercent, _ :=cpu.Percent(time.Second*5,false)
+	cpuPercent, _ :=cpu.Percent(time.Second,false)
 
 	hw := HardwareStruct {
 		strconv.FormatUint(v.Total, 10),
@@ -153,6 +153,23 @@ func CheckPasswordHash(hash, password  string) bool {
     err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
     return err == nil
 }
+func apiHandler(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("API")
+	session, _ := store.Get(r, "cookie-name")
+
+	 // Check if user is authenticated
+	 if auth, ok := session.Values["authenticated"].(bool); !ok || !auth {
+			 if r.URL.Path != "/" {
+				 http.Redirect(w, r, "", 302)
+			 }
+			 login(w,r)
+			 return
+	 }
+	 switch (r.URL.Path) {
+	 case "/api/hardware" :
+		 json.NewEncoder(w).Encode(getHardwareInfo())
+	 }
+}
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
 	 //fmt.Println(r.URL.Path)
@@ -166,7 +183,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
         login(w,r)
         return
     }
-		fmt.Println(session.Values["name"])
+		//fmt.Println(session.Values["name"])
 		db, err := sql.Open("sqlite3", "./database.db")
 		if err != nil {
 				panic(err.Error())
@@ -228,9 +245,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			session.Save(r, w)
 			http.Redirect(w, r, "", 302)
 
-		case "/apihardware" :
-			json.NewEncoder(w).Encode(getHardwareInfo())
-
 		case "/" :
 			var gameServersResults []GameServers
 			gameServersResults, _ = getServersFromDataBase(db, "")
@@ -259,9 +273,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 				panic(err.Error())
 		}
 
-		var userResults []UserStruct
-		var ifExists bool
-		userResults, ifExists = getUsersFromDataBase(db, (" WHERE name='"+ strings.ToLower(r.FormValue("login"))+ "'"))
+		userResults, ifExists := getUsersFromDataBase(db, (" WHERE name='"+ strings.ToLower(r.FormValue("login"))+ "'"))
 		//usersResults.PasswordHash
 		if r.FormValue("login") != "" && ifExists && CheckPasswordHash(userResults[0].PasswordHash, r.FormValue("password")) {
 			session.Values["authenticated"] = true
@@ -273,25 +285,26 @@ func login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "", 302)
 }
 func main() {
-	
-	//command := "Tell Application \"iTunes\" to playpause"
 
-	    //c := exec.Command("/usr/bin/osascript", "-e", command)
-		//	if err := c.Run(); err != nil {
-	//		 fmt.Println(err.String())
-	// }
+		//command := "Tell Application \"iTunes\" to playpause"
+
+		    //c := exec.Command("/usr/bin/osascript", "-e", command)
+			//	if err := c.Run(); err != nil {
+		//		 fmt.Println(err.String())
+		// }
 
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3000"
-	}
+		port := os.Getenv("PORT")
+		if port == "" {
+			port = "3000"
+		}
 
-	mux := http.NewServeMux()
+		mux := http.NewServeMux()
 
-	fs := http.FileServer(http.Dir("assets"))
-	mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
+		fs := http.FileServer(http.Dir("assets"))
+		mux.Handle("/assets/", http.StripPrefix("/assets/", fs))
 
-	mux.HandleFunc("/", indexHandler)
-	http.ListenAndServe(":"+port, mux)
+		mux.HandleFunc("/api/", apiHandler)
+		mux.HandleFunc("/", indexHandler)
+		http.ListenAndServe(":"+port, mux)
 }
