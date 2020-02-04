@@ -331,6 +331,9 @@ func login(w http.ResponseWriter, r *http.Request) {
 }
 func main() {
 
+	//id := gameServer("download", "../../servers", "90", "")
+//	id := gameServer("runGame", "./servers/hlds.exe", "", "-console -game cstrike +maxplayers 20 +map de_dust2 -sv_lan 0 -port 27015")
+
 		port := os.Getenv("PORT")
 		if port == "" {
 			port = "3000"
