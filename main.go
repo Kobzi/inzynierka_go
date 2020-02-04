@@ -6,6 +6,7 @@ import (
 	//"log"
 	"net/http"
 	"os"
+	"os/exec"
   "golang.org/x/crypto/bcrypt"
 	"strings"
 	"strconv"
@@ -78,6 +79,35 @@ func getHardwareInfo() HardwareStruct {
 		strconv.FormatFloat(hdd.UsedPercent, 'f', 2, 64),
 		strconv.FormatFloat(cpuPercent[0], 'f', 2, 64) }
 		return hw
+}
+
+func gameServer(whatToDo string, path string, gameId string, gameParametrs string) int {
+  processid:=0
+
+  switch (whatToDo) {
+  case "download" :
+    cmd := exec.Command("./src/SteamCMD/steamcmd.exe", "+login anonymous", "+force_install_dir "+path, "+app_update "+gameId)
+    cmd.Stdout = os.Stdout
+    err := cmd.Start()
+    if err != nil {
+       panic(err.Error())
+    }
+    //log.Printf("Just ran subprocess %d, exiting\n", cmd.Process.Pid)
+    processid = cmd.Process.Pid
+
+  case "runGame" :
+    cmd := exec.Command(path, gameParametrs)
+    cmd.Stdout = os.Stdout
+    err := cmd.Start()
+    cmd.Wait()
+    if err != nil {
+       panic(err.Error())
+    }
+
+    //log.Printf("Just ran subprocess %d, exiting\n", cmd.Process.Pid)
+    processid = cmd.Process.Pid
+    }
+	return processid
 }
 
 func doQuery(query string, db *sql.DB){
@@ -154,7 +184,7 @@ func CheckPasswordHash(hash, password  string) bool {
     return err == nil
 }
 func apiHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("API")
+	//fmt.Println("API")
 	session, _ := store.Get(r, "cookie-name")
 
 	 // Check if user is authenticated
@@ -249,7 +279,22 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			var gameServersResults []GameServers
 			gameServersResults, _ = getServersFromDataBase(db, "")
 
+			if r.Method == http.MethodPost {
+				s:= strings.Split(r.FormValue("submit"), "_")
 
+				switch (s[0]) {
+					case "add" :
+						var ifExists bool
+						_, ifExists = getServersFromDataBase(db, (" WHERE localization='"+ strings.ToLower(r.FormValue("localization"))+ "'"))
+						if (!ifExists) {
+							doQuery("INSERT INTO servers(type, nameServer, localization, startCommands, isiton) VALUES('" +strings.ToLower(r.FormValue("game"))+ "', '" +strings.ToLower(r.FormValue("name"))+ "', '" +strings.ToLower(r.FormValue("localization"))+ "', '" +strings.ToLower(r.FormValue("commandsToRunServer"))+ "', 0)", db )
+						}
+						http.Redirect(w, r, "/", 302)
+
+				default:
+					http.Redirect(w, r, "/", 302)
+				}
+			}
 
 			tpl = template.Must(template.ParseFiles("index.html"))
 			tpl.Execute(w, gameServersResults)
@@ -285,14 +330,6 @@ func login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "", 302)
 }
 func main() {
-
-		//command := "Tell Application \"iTunes\" to playpause"
-
-		    //c := exec.Command("/usr/bin/osascript", "-e", command)
-			//	if err := c.Run(); err != nil {
-		//		 fmt.Println(err.String())
-		// }
-
 
 		port := os.Getenv("PORT")
 		if port == "" {

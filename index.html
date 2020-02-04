@@ -366,10 +366,8 @@
 		                    </a>
 		                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
 		                      <div class="dropdown-header">Ustawienia</div>
-		                      <a class="dropdown-item" href="#">Dodaj nowy serwer</a>
-		                      <a class="dropdown-item" href="#">Wyłącz serwer</a>
-		                      <div class="dropdown-divider"></div>
-		                      <a class="dropdown-item" href="#">Usuń serwer</a>
+		                      <a class="dropdown-item" href="" data-toggle="modal" data-target="#addServerModal">Dodaj nowy serwer</a>
+
 		                    </div>
 		                  </div>
 		                </div>
@@ -545,34 +543,39 @@
 
 
 			<div class="modal fade" id="addServerModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-		    <div class="modal-dialog" role="document">
-		      <div class="modal-content">
-		        <div class="modal-header">
-		          <h5 id="titleAddServer" class="modal-title">Dodawanie Nowego użytkownika</h5>
-		          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-		            <span aria-hidden="true">×</span>
-		          </button>
-		        </div>
-		        <div class="modal-body">
+				<div class="modal-dialog" role="document">
+					<div class="modal-content">
+						<div class="modal-header">
+							<h5 id="titleAddUser" class="modal-title">Dodawanie nowego servera</h5>
+							<button class="close" type="button" data-dismiss="modal" aria-label="Close">
+								<span aria-hidden="true">×</span>
+							</button>
+						</div>
+						<div class="modal-body">
 							<form id="addServerForm" action="" method="post">
 							 <label for="name">Nazwa</label>
 							 <input type="text" name="name" id="name" class="form-control" required> <br>
-							 <label for="email">Email</label>
-							 <input type="email" name="email" id="email" class="form-control" required> <br>
-							 <label for="password">Hasło tymczasowe</label>
-							 <input type="password" name="password" id="password" class="form-control" required> <br>
-							 <label for="level">Poziom użytkownika (level) </label>
-							 <input type="number" id="level" name="level" min="1" max="3" step="1" value="3" class="form-control" required><br>
+							 <label for="game">Gra</label>
+							 <select name="game" class="form-control" required>
+							     <option value="cs16">Couter Strike 1.6</option>
+							     <option value="hf2">Half-Life 2</option>
+							 </select> <br>
+							 <label for="localization">Lokalizacja</label>
+							 <input type="text" name="localization" id="localization" class="form-control" required> <br>
+							 <label for="coomandsToRunServer">Komendy do uruchomienia</label>
+							 <input type="text" name="commandsToRunServer" id="commandsToRunServer" class="form-control" required> <br>
+
 							<br>
 						</div>
-		        <div class="modal-footer">
-		          <button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
-							<button id="addUser" class="btn btn-primary" type="submit" value="add" name="submit"> Dodaj</button>
+						<div class="modal-footer">
+							<button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
+							<button id="addServer" class="btn btn-primary" type="submit" value="add" name="submit"> Dodaj</button>
 						 </form>
-		        </div>
-		      </div>
-		    </div>
-		  </div>
+						</div>
+					</div>
+				</div>
+			</div>
+
 
 		  <!-- Bootstrap core JavaScript-->
 		  <script src="assets/vendor/jquery/jquery.min.js"></script>
