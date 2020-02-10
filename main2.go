@@ -7,6 +7,7 @@ import (
     //"github.com/gorilla/websocket"
     "os"
     "os/exec"
+    "time"
 )
 
 
@@ -25,7 +26,9 @@ func gameServer(whatToDo string, path string, gameId string, gameParametrs strin
     processid = cmd.Process.Pid
 
   case "runGame" :
-    cmd := exec.Command(path, gameParametrs)
+    //cmd := exec.Command(path, gameParametrs)
+    cmd:= exec.Command("cmd","/c", "cd /d ./servers && start hlds.exe -console -game cstrike +maxplayers 20 +map de_dust2 -sv_lan 0 -port 27015" )
+    //cmd /c "cd /d ./servers && start hlds.exe -console -game cstrike +maxplayers 20 +map de_dust2 -sv_lan 0 -port 27015"
     cmd.Stdout = os.Stdout
     err := cmd.Start()
     cmd.Wait()
@@ -50,7 +53,9 @@ func main() {
     log.Printf("Just ran subprocess %d, exiting\n", output.Process.Pid)*/
 
     //id := gameServer("download", "../../servers", "90", "")
-    id := gameServer("runGame", "start '' 'servers\hlds.exe'", "", "-console -game cstrike +maxplayers 20 +map de_dust2 -sv_lan 0 -port 27015")
+    id := gameServer("runGame", "", "", "")
 
     fmt.Println(id)
+    duration := time.Duration(10)*time.Second // Pause for 10 seconds
+    time.Sleep(duration)
 }
