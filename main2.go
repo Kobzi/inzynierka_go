@@ -3,61 +3,54 @@ package main
 import (
     "fmt"
     "log"
-    "net/http"
-    "github.com/gorilla/websocket"
+    //"net/http"
+    //"github.com/gorilla/websocket"
+    "os"
+    "os/exec"
 )
 
-func homePage(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "Home Page")
-}
 
-func wsEndpoint(w http.ResponseWriter, r *http.Request) {
-    //fmt.Fprintf(w, "Hello World")
-    upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+func gameServer(whatToDo string, path string, gameId string, gameParametrs string) int {
+  processid:=0
 
-    ws, err := upgrader.Upgrade(w, r, nil)
+  switch (whatToDo) {
+  case "download" :
+    cmd := exec.Command("./src/SteamCMD/steamcmd.exe", "+login anonymous", "+force_install_dir "+path, "+app_update "+gameId)
+    cmd.Stdout = os.Stdout
+    err := cmd.Start()
     if err != nil {
-      log.Println(err)
+       log.Fatal(err)
     }
+    //log.Printf("Just ran subprocess %d, exiting\n", cmd.Process.Pid)
+    processid = cmd.Process.Pid
 
-    log.Println("Client Connected")
-    err = ws.WriteMessage(1, []byte("Hi Client!"))
+  case "runGame" :
+    cmd := exec.Command(path, gameParametrs)
+    cmd.Stdout = os.Stdout
+    err := cmd.Start()
+    cmd.Wait()
     if err != nil {
-        log.Println(err)
+       log.Fatal(err)
     }
 
-   reader(ws)
-}
-
-func setupRoutes() {
-    http.HandleFunc("/", homePage)
-    http.HandleFunc("/ws", wsEndpoint)
-}
-var upgrader = websocket.Upgrader{
-    ReadBufferSize:  1024,
-    WriteBufferSize: 1024,
-}
-func reader(conn *websocket.Conn) {
-    for {
-    // read in a message
-        messageType, p, err := conn.ReadMessage()
-        if err != nil {
-            log.Println(err)
-            return
-        }
-    // print out that message for clarity
-        fmt.Println(string(p))
-
-        if err := conn.WriteMessage(messageType, p); err != nil {
-            log.Println(err)
-            return
-        }
-
+    //log.Printf("Just ran subprocess %d, exiting\n", cmd.Process.Pid)
+    processid = cmd.Process.Pid
     }
-}
 
+return processid
+
+}
 func main() {
     fmt.Println("Hello World")
-    setupRoutes()
-    log.Fatal(http.ListenAndServe(":3000", nil))
+    /*output, err := exec.Command("./src/SteamCMD/steamcmd.exe").Output()
+    if err!=nil {
+        fmt.Println(err.Error())
+    }
+    fmt.Println(string(output))
+    log.Printf("Just ran subprocess %d, exiting\n", output.Process.Pid)*/
+
+    //id := gameServer("download", "../../servers", "90", "")
+    id := gameServer("runGame", "start '' 'servers\hlds.exe'", "", "-console -game cstrike +maxplayers 20 +map de_dust2 -sv_lan 0 -port 27015")
+
+    fmt.Println(id)
 }
