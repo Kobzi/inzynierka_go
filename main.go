@@ -223,7 +223,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		case "/users" :
 
 			var usersResults []UserStruct
-			usersResults, _ = getUsersFromDataBase(db, "")
+			usersResults, _ = getUsersFromDataBase(db, (" WHERE level>=" +session.Values["levelOfUser"].(string)))
 
 			if r.Method == http.MethodPost {
 				s:= strings.Split(r.FormValue("submit"), "_")
@@ -272,6 +272,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			session.Values["authenticated"] = false
 			session.Values["name"] = ""
 			session.Values["id"] = ""
+			session.Values["level"] = ""
 			session.Save(r, w)
 			http.Redirect(w, r, "", 302)
 
@@ -324,6 +325,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 			session.Values["authenticated"] = true
 			session.Values["name"] = strings.ToLower(r.FormValue("login"))
 			session.Values["id"] = strconv.Itoa(userResults[0].Id)
+			session.Values["levelOfUser"] = strconv.Itoa(userResults[0].Level)
 			session.Save(r, w)
 	 	}
 
