@@ -35,12 +35,23 @@ var (
     key = []byte(token)
     store = sessions.NewCookieStore(key)
 )
+
 type UserStruct struct {
 		Id   int    `json:"id"`
 		Name string `json:"name"`
 		Email string `json:"email"`
 		PasswordHash string `json:"passwordHash"`
 		Level int `json:"level"`
+}
+
+type GamesStruct struct {
+		IdGame   int    `json:"idgame"`
+		GamePlatform string `json:"gameplatform"`
+		GamePlatformId int `json:"gameplatformid"`
+		NameShort string `json:"nameshort"`
+		NameFull string `json:"namefull"`
+		StandardCommands string `json:"standardcommands"`
+		FileToRun string `json:"filetorun"`
 }
 
 type GameServers struct {
@@ -50,6 +61,7 @@ type GameServers struct {
 		Localization string `json:"localization"`
 		StartCommands string `json:"startcommands"`
 		IsItOn bool `json:"isiton"`
+		AlreadyDownloaded bool `json:"alreadydownloaded"`
 }
 
 type HardwareStruct struct {
@@ -81,7 +93,7 @@ func getHardwareInfo() HardwareStruct {
 		return hw
 }
 
-func gameServer(whatToDo string, path string, gameId string, gameParametrs string) int {
+func gameServer(whatToDo string, path string, gameId string, gameParametrs string, fileToRun string) int {
   processid:=0
 
   switch (whatToDo) {
@@ -127,7 +139,7 @@ func getServersFromDataBase(db *sql.DB, where string) ([]GameServers, bool) {
 	for results.Next() {
 		var gameServer GameServers
 		// for each row, scan the result into our tag composite object
-		err = results.Scan(&gameServer.Id, &gameServer.Type, &gameServer.Name, &gameServer.Localization, &gameServer.StartCommands, &gameServer.IsItOn)
+		err = results.Scan(&gameServer.Id, &gameServer.Type, &gameServer.Name, &gameServer.Localization, &gameServer.StartCommands, &gameServer.IsItOn, &gameServer.AlreadyDownloaded)
 		if err != nil {
 			panic(err.Error()) // proper error handling instead of panic in your app
 		} else {
@@ -136,6 +148,30 @@ func getServersFromDataBase(db *sql.DB, where string) ([]GameServers, bool) {
 			gameServers = append(gameServers,gameServer)
 	}
 		return gameServers, ifExists
+}
+
+func getGamesFromDataBase(db *sql.DB, where string) ([]GamesStruct, bool){
+	results, err := db.Query("SELECT * FROM games" +where)
+	if err != nil {
+		panic(err.Error()) // proper error handling instead of panic in your app
+	}
+	var gamesResults []GamesStruct
+	var ifExists bool
+
+	for results.Next() {
+		var games GamesStruct
+		// for each row, scan the result into our tag composite object
+		err = results.Scan(&games.IdGame, &games.GamePlatform, &games.GamePlatformId, &games.NameShort, &games.NameFull, &games.StandardCommands, &games.FileToRun )
+		if err != nil {
+		//	panic(err.Error()) // proper error handling instead of panic in your app
+		ifExists = false
+		} else {
+			ifExists = true
+		}
+			gamesResults = append(gamesResults,games)
+	}
+
+		return gamesResults, ifExists
 }
 
 func getUsersFromDataBase(db *sql.DB, where string) ([]UserStruct, bool) {
@@ -265,7 +301,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 			//fmt.Println(usersResults[0].Name)
 			tpl = template.Must(template.ParseFiles("users.html"))
-			tpl.Execute(w, usersResults)
+			tpl.Execute(w, struct{
+				Name string
+				Users []UserStruct
+			}{session.Values["name"].(string), usersResults})
 
 		case "/logout" :
 			// Revoke users authentication
@@ -277,28 +316,43 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "", 302)
 
 		case "/" :
-			var gameServersResults []GameServers
-			gameServersResults, _ = getServersFromDataBase(db, "")
+			gameServersResults, _ := getServersFromDataBase(db, "")
+			gamesResults, _ := getGamesFromDataBase(db,"")
+
 
 			if r.Method == http.MethodPost {
 				s:= strings.Split(r.FormValue("submit"), "_")
-
+				fmt.Println(r.FormValue("submit"))
 				switch (s[0]) {
 					case "add" :
 						var ifExists bool
 						_, ifExists = getServersFromDataBase(db, (" WHERE localization='"+ strings.ToLower(r.FormValue("localization"))+ "'"))
 						if (!ifExists) {
-							doQuery("INSERT INTO servers(type, nameServer, localization, startCommands, isiton) VALUES('" +strings.ToLower(r.FormValue("game"))+ "', '" +strings.ToLower(r.FormValue("name"))+ "', '" +strings.ToLower(r.FormValue("localization"))+ "', '" +strings.ToLower(r.FormValue("commandsToRunServer"))+ "', 0)", db )
+							doQuery("INSERT INTO servers(type, nameServer, localization, startCommands, isiton, alreadydownloaded) VALUES('" +strings.ToLower(r.FormValue("game"))+ "', '" +strings.ToLower(r.FormValue("name"))+ "', '" +strings.ToLower(r.FormValue("localization"))+ "', '" +strings.ToLower(r.FormValue("commandsToRunServer"))+ "', 0, 0)", db )
 						}
 						http.Redirect(w, r, "/", 302)
-
+					case "edit" :
+						doQuery("UPDATE servers SET nameServer='" +r.FormValue("name")+"', startCommands='" +r.FormValue("commandsToRunServer")+ "' WHERE id=" +s[1], db)
+						http.Redirect(w, r, "/", 302)
+					case "delete" :
+						doQuery("DELETE FROM servers WHERE id="+s[1], db)
+						http.Redirect(w, r, "/", 302)
+					case "download" :
+						server,_ := getServersFromDataBase(db, " WHERE id="+s[1])
+						game,_ := getGamesFromDataBase(db, " WHERE nameShort='"+server[0].Type+ "'")
+						gameServer("download", server[0].Localization, strconv.Itoa(game[0].GamePlatformId), server[0].StartCommands, game[0].FileToRun)
 				default:
 					http.Redirect(w, r, "/", 302)
 				}
 			}
 
 			tpl = template.Must(template.ParseFiles("index.html"))
-			tpl.Execute(w, gameServersResults)
+			tpl.Execute(w, struct{
+				Name string
+				Servers []GameServers
+				Games []GamesStruct
+			}{session.Values["name"].(string),gameServersResults,gamesResults})
+
 		default:
 			http.Redirect(w, r, "", 302)
 		}

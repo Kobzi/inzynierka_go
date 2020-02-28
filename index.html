@@ -228,7 +228,7 @@
 		            <!-- Nav Item - User Information -->
 		            <li class="nav-item dropdown no-arrow">
 		              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-		                <span class="mr-2 d-none d-lg-inline text-gray-600 small">Łukasz Kocjan</span>
+		                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ .Name}}</span>
 		                <i class="fas fa-user-circle"></i>
 		              </a>
 		              <!-- Dropdown - User Information -->
@@ -366,48 +366,50 @@
 		                    </a>
 		                    <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in" aria-labelledby="dropdownMenuLink">
 		                      <div class="dropdown-header">Ustawienia</div>
-		                      <a class="dropdown-item" href="" data-toggle="modal" data-target="#addServerModal">Dodaj nowy serwer</a>
+		                      <a class="dropdown-item" href="" onclick="ClearForm()" data-toggle="modal" data-target="#addServerModal">Dodaj nowy serwer</a>
 
 		                    </div>
 		                  </div>
 		                </div>
 		                <div class="card-body">
 											<div class="table-responsive">
-											<table class="table">
+											<table class="table" id="dataTable">
 											  <thead>
 											    <tr>
 											      <th>ID</th>
 											      <th>Nazwa Servera</th>
-											      <th>Liczba graczy</th>
-											      <th>Mapa</th>
+											      <th>Typ Gry</th>
+											      <th>Komendy</th>
 														<th>Lokalizacja</th>
 														<th>Opcje</th>
 											    </tr>
 											  </thead>
-												{{ range .}}
+												{{ range .Servers}}
 											  <tbody>
 											    <tr>
-											      <th>{{ .Id }}</th>
-											      <td>{{ .Name }}</td>
-											      <td></td>
-											      <td></td>
-														<td>{{ .Localization }}</td>
+											      <th id="table_id_{{ .Id }}">{{ .Id }}</th>
+											      <td id="table_name_{{ .Id }}">{{ .Name }}</td>
+											      <td id="table_game_{{ .Id }}">{{ .Type}}</td>
+											      <td id="table_commandsToRunServer_{{ .Id }}"> {{ .StartCommands }}</td>
+														<td id="table_localization_{{ .Id }}">{{ .Localization }}</td>
 														<td>
+															{{ if .AlreadyDownloaded }}
 															<button type="button" value="" class="btn btn-success btn-circle btn-sm" >
 																	<i class="fas fa-play"></i>
 															</button>
 															<button type="button" value="" class="btn btn-warning btn-circle btn-sm">
 																	<i class="fas fa-pause"></i>
 															</button>
-															<button type="button" value="" class="btn btn-primary btn-circle btn-sm" >
+															{{ end }}
+															<button type="button" value="download_{{ .Id}}" class="btn btn-primary btn-circle btn-sm server-download" data-toggle="modal" data-target="#deleteModal">
 																	<i class="fas fa-download"></i>
 															</button>
-															<button type="button"value="" class="btn btn-info btn-circle btn-sm">
+															<button type="button" value="{{ .Id }}" class="btn btn-info btn-circle btn-sm server-edit" data-toggle="modal" data-target="#addServerModal">
 		                    					<i class="fas fa-edit"></i>
 														</button>
-															<button type="button" value="" class="btn btn-danger btn-circle btn-sm">
-																	<i class="fas fa-trash"></i>
-															</button>
+														<button type="button" value="delete_{{ .Id }}" class="btn btn-danger btn-circle btn-sm server-delete" data-toggle="modal" data-target="#deleteModal">
+																<i class="fas fa-trash"></i>
+														</button>
 
 														</td>
 											    </tr>
@@ -546,7 +548,7 @@
 				<div class="modal-dialog" role="document">
 					<div class="modal-content">
 						<div class="modal-header">
-							<h5 id="titleAddUser" class="modal-title">Dodawanie nowego servera</h5>
+							<h5 id="titleAddServer" class="modal-title">Dodawanie nowego servera</h5>
 							<button class="close" type="button" data-dismiss="modal" aria-label="Close">
 								<span aria-hidden="true">×</span>
 							</button>
@@ -556,13 +558,14 @@
 							 <label for="name">Nazwa</label>
 							 <input type="text" name="name" id="name" class="form-control" required> <br>
 							 <label for="game">Gra</label>
-							 <select name="game" class="form-control" required>
-							     <option value="cs16">Couter Strike 1.6</option>
-							     <option value="hf2">Half-Life 2</option>
+							 <select name="game" id="game" class="form-control" required>
+								 {{range .Games}}
+							     <option value="{{ .NameShort }}"> {{ .NameFull }}</option>
+									 {{ end }}
 							 </select> <br>
 							 <label for="localization">Lokalizacja</label>
 							 <input type="text" name="localization" id="localization" class="form-control" required> <br>
-							 <label for="coomandsToRunServer">Komendy do uruchomienia</label>
+							 <label for="commandsToRunServer">Komendy do uruchomienia</label>
 							 <input type="text" name="commandsToRunServer" id="commandsToRunServer" class="form-control" required> <br>
 
 							<br>
@@ -575,6 +578,31 @@
 					</div>
 				</div>
 			</div>
+
+
+
+			<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+ 			 <div class="modal-dialog" role="document">
+ 				 <div class="modal-content">
+ 					 <div class="modal-header">
+ 						 <h5 class="modal-title" id="titleDeleteModal">Usuwanie serwera</h5>
+ 						 <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+ 							 <span aria-hidden="true"></span>
+ 						 </button>
+ 					 </div>
+ 					 <div class="modal-body" id="secondTitleDeleteModal">Jesteś pewien, że chcesz usunąc ten serwer?</div>
+ 					 <div class="modal-footer">
+ 						 <button class="btn btn-secondary" type="button" data-dismiss="modal">Anuluj</button>
+ 						 <form action="" method="post">
+ 							 <button type="submit" id="server-delete-button" class="btn btn-primary" name="submit">
+ 									 Tak, usuń
+ 							 </button>
+ 						 </form>
+ 					 </div>
+ 				 </div>
+ 			 </div>
+ 		 </div>
+
 
 
 		  <!-- Bootstrap core JavaScript-->
@@ -595,6 +623,14 @@
 		  <script src="assets/js/demo/chart-pie-demo.js"></script>
 
 			<script>
+			function selectFolder(e) {
+			    var theFiles = e.target.files;
+			    var relativePath = theFiles[0].webkitRelativePath;
+			    var folder = relativePath.split("/");
+			    alert(folder[0]);
+			}
+
+
 			function formatBytes(bytes, decimals = 2) {
 	    if (bytes === 0) return '0 Bytes';
 
@@ -630,7 +666,63 @@
 							}
 				});
 				};
+
+				var table = document.getElementById('dataTable');
+				var rows = table.getElementsByClassName('server-edit');
+				var rows2 = table.getElementsByClassName('server-delete');
+				var rows3 = table.getElementsByClassName('server-download');
+
+				for(var x = 0; x < rows2.length; x++) {
+					rows2[x].onclick = function() {
+						document.getElementById('server-delete-button').value = this.value;
+						document.getElementById('titleDeleteModal').innerText = "Usuwanie serwera";
+						document.getElementById('secondTitleDeleteModal').innerText = "Jesteś pewien, że chcesz usunąc ten serwer?";
+						document.getElementById('server-delete-button').innerText = "Tak, usuń";
+					}
+				};
+
+				for(var x = 0; x < rows3.length; x++) {
+					rows3[x].onclick = function() {
+						document.getElementById('server-delete-button').value = this.value;
+						document.getElementById('titleDeleteModal').innerText = "Pobieranie serwera";
+						document.getElementById('secondTitleDeleteModal').innerText = "Czy chcesz zacząć pobierać teraz serwer? To może chwilkę potrwać.";
+							document.getElementById('server-delete-button').innerText = "Tak, pobierz";
+					}
+				};
+
+				for(var x = 0; x < rows.length; x++) {
+					rows[x].onclick = function() {
+						document.getElementById('name').value= document.getElementById('table_name_'+this.value).innerText;
+						document.getElementById('localization').value= document.getElementById('table_localization_'+this.value).innerText;
+						document.getElementById('commandsToRunServer').value = document.getElementById('table_commandsToRunServer_'+this.value).innerText
+						document.getElementById('localization').disabled = true;
+						var opts = document.getElementById('game').options;
+						var val = document.getElementById('table_game_'+this.value).innerText
+						for (var opt, j = 0; opt = opts[j]; j++) {
+    					if (opt.value == val) {
+      					document.getElementById('game').selectedIndex = j;
+      					break;
+    					}
+  					}
+						document.getElementById('game').disabled = true;
+						document.getElementById('addServer').innerText = "Edytuj";
+						document.getElementById('titleAddServer').innerText = "Edytowanie serwera";
+						document.getElementById('addServer').value="edit_"+this.value;
+
+					}
+				};
+
 			};
+
+			function ClearForm(){
+				document.getElementById('addServer').innerText = "Dodaj";
+				document.getElementById("addServerForm").reset();
+				document.getElementById('titleAddServer').innerText = "Dodawanie Nowego serwera";
+				document.getElementById('addServer').value="add";
+				document.getElementById('localization').disabled = false;
+				document.getElementById('game').disabled = false;
+
+			}
 			</script>
 
 		</body>
