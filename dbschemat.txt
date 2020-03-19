@@ -1,0 +1,48 @@
+//// -- LEVEL 1
+//// -- Tables and References
+
+// Creating tables
+Table users {
+  id integer [pk, increment] // auto-increment
+  name text
+  passwordHash text
+  email integer
+  level integer
+}
+
+
+
+Table servers {
+  id integer [pk]
+  gameId integer
+  nameServer text
+  localization text
+  startCommands text
+  isItOn bool
+  alreadyDownloaded bool
+ }
+
+Table game {
+   idGame integer  [pk]
+   gamePlatform text
+   gamePlatformId integer
+   nameShort text
+   nameFull text
+   standardCommands text
+   fileToRun text
+
+ }
+
+Table organization {
+  id integer [pk]
+  serverId integer
+  userId integer
+}
+
+
+
+Ref: "organization"."serverId" < "servers"."id"
+
+Ref: "organization"."userId" < "users"."id"
+
+Ref: "servers"."gameId" < "game"."idGame"

@@ -62,6 +62,7 @@ type GameServers struct {
 		StartCommands string `json:"startcommands"`
 		IsItOn bool `json:"isiton"`
 		AlreadyDownloaded bool `json:"alreadydownloaded"`
+		Owner string `json:"owner"`
 }
 
 type HardwareStruct struct {
@@ -108,7 +109,7 @@ func gameServer(whatToDo string, path string, gameId string, gameParametrs strin
     processid = cmd.Process.Pid
 
   case "runGame" :
-    cmd := exec.Command(path, gameParametrs)
+    cmd := exec.Command("cmd","/c", "cd /d "+path+" && start " +gameId+ " " +gameParametrs)
     cmd.Stdout = os.Stdout
     err := cmd.Start()
     cmd.Wait()
@@ -116,9 +117,8 @@ func gameServer(whatToDo string, path string, gameId string, gameParametrs strin
        panic(err.Error())
     }
 
-    //log.Printf("Just ran subprocess %d, exiting\n", cmd.Process.Pid)
     processid = cmd.Process.Pid
-    }
+  }
 	return processid
 }
 
@@ -130,7 +130,7 @@ func doQuery(query string, db *sql.DB){
 
 func getServersFromDataBase(db *sql.DB, where string) ([]GameServers, bool) {
 	//db, _ := sql.Open("sqlite3", "./database.db")
-	results, err := db.Query("SELECT * FROM servers" +where)
+	results, err := db.Query("SELECT servers.id, servers.type, servers.nameServer, servers.localization, servers.startCommands, servers.isiton, servers.alreadydownloaded, organization.userId FROM servers INNER JOIN organization ON servers.id=organization.serverId " +where)
 	if err != nil {
 		panic(err.Error()) // proper error handling instead of panic in your app
 	}
@@ -139,7 +139,7 @@ func getServersFromDataBase(db *sql.DB, where string) ([]GameServers, bool) {
 	for results.Next() {
 		var gameServer GameServers
 		// for each row, scan the result into our tag composite object
-		err = results.Scan(&gameServer.Id, &gameServer.Type, &gameServer.Name, &gameServer.Localization, &gameServer.StartCommands, &gameServer.IsItOn, &gameServer.AlreadyDownloaded)
+		err = results.Scan(&gameServer.Id, &gameServer.Type, &gameServer.Name, &gameServer.Localization, &gameServer.StartCommands, &gameServer.IsItOn, &gameServer.AlreadyDownloaded, &gameServer.Owner)
 		if err != nil {
 			panic(err.Error()) // proper error handling instead of panic in your app
 		} else {
@@ -151,7 +151,7 @@ func getServersFromDataBase(db *sql.DB, where string) ([]GameServers, bool) {
 }
 
 func getGamesFromDataBase(db *sql.DB, where string) ([]GamesStruct, bool){
-	results, err := db.Query("SELECT * FROM games" +where)
+	results, err := db.Query("SELECT * FROM games " +where)
 	if err != nil {
 		panic(err.Error()) // proper error handling instead of panic in your app
 	}
@@ -259,7 +259,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		case "/users" :
 
 			var usersResults []UserStruct
-			usersResults, _ = getUsersFromDataBase(db, (" WHERE level>=" +session.Values["levelOfUser"].(string)))
+			usersResults, _ = getUsersFromDataBase(db, (" WHERE level>" +session.Values["levelOfUser"].(string)))
 
 			if r.Method == http.MethodPost {
 				s:= strings.Split(r.FormValue("submit"), "_")
@@ -315,8 +315,21 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 			session.Save(r, w)
 			http.Redirect(w, r, "", 302)
 
+
+		case "/myprofile":
+
+			var usersResults []UserStruct
+			usersResults, _ = getUsersFromDataBase(db, (" WHERE name='" +session.Values["name"].(string)+ "'"))
+
+			tpl = template.Must(template.ParseFiles("myprofile.html"))
+			tpl.Execute(w, struct{
+				Name string
+				UserStruct UserStruct
+			}{session.Values["name"].(string),usersResults[0]})
+
+
 		case "/" :
-			gameServersResults, _ := getServersFromDataBase(db, "")
+			gameServersResults, _ := getServersFromDataBase(db, "WHERE organization.userId=" +session.Values["id"].(string))
 			gamesResults, _ := getGamesFromDataBase(db,"")
 
 
